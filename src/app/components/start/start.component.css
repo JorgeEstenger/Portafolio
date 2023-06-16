@@ -1,0 +1,28 @@
+
+
+.example-card {
+  max-width: 700px;
+}
+
+.example-header-image {
+  background-image: url('https://media.licdn.com/dms/image/D4E03AQHEtRbcTtZLGg/profile-displayphoto-shrink_800_800/0/1679689444177?e=2147483647&v=beta&t=Vyf04-tipt5_ECqi65DBALjlF_naTWtm7ifxigFh7JQ');
+  background-size: cover;
+}
+
+p {
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+img {
+  overflow: hidden;
+  position: relative;
+}
+ h1 {
+  font-size: 80px ;
+  color: rgb(255, 255, 255);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-shadow: 0cap;
+ }
