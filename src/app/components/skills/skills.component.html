@@ -1,40 +1,124 @@
+<h1 class="mt-5 text-center" style="font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;">My Skills</h1>
+ <hr class="container">
 
-<div class="mt-5 card-group">
-  <div class="ms-5 card">
-    <img src="https://www.techprd.com/wp-content/uploads/2017/11/Angular-1024x985.png" class="card-img-top" width="90px" height="300px" alt="...">
-    <div class="card-body">
-    </div>
-  </div>
-  <div class="card">
-    <img src="https://i.pinimg.com/originals/ae/f0/ba/aef0ba961a3570b3f633f48a978a9965.png" class="card-img-top" width="40px" height="300px" alt="...">
-    <div class="card-body">
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
 
-    </div>
-  </div>
-  <div class="me-5 card">
-    <img src="https://ih0.redbubble.net/image.366684650.5673/flat,1000x1000,075,f.u1.jpg" class="card-img-top" width="40px" height="300px" alt="...">
-    <div class="card-body">
+    .spinner {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      margin: 20px;
+    }
 
-    </div>
-  </div>
-</div>
+    .spinner:before {
+      content: "";
+      box-sizing: border-box;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100px;
+      height: 100px;
+      margin-top: -40px;
+      margin-left: -40px;
+      border-radius: 50%;
+      border: 8px solid #f3f3f3;
+      border-top-color: #3498db;
+      animation: spin 2s linear infinite;
+    }
 
-<hr>
-<div class="ms-4 row row-cols-1 row-cols-md-2 g-4">
-  <div class="col">
-    <div class="card">
-      <img src="https://lthub.ubc.ca/files/2021/06/GitHub-Logo.png" class="card-img-top" width="10px" height="250px" alt="...">
-      <div class="card-body">
-      </div>
+    .percentage {
+      position: absolute;
+      top: 60%;
+      left: 60%;
+      transform: translate(-50%, -50%);
+      font-size: 30px;
+      font-weight: bold;
+      color: #000000;
+    }
+
+    .message {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .line {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 80px;
+    }
+
+    .line img {
+      width: 150px;
+      height: 150px;
+      margin-left: 40px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="spinner">
+      <div class="percentage">90%</div>
     </div>
-  </div>
-  <div class="col">
-    <div class="card">
-      <img src="https://www.britefish.net/wp-content/uploads/2019/07/logo-bootstrap-768x768.png" class="card-img-top" width="100px" height="300px" alt="...">
-      <div class="card-body">
-      </div>
+    <div class="message">ANGULAR</div>
+
+    <div class="spinner">
+      <div class="percentage">100%</div>
     </div>
+    <div class="message">GITHUB</div>
+
+    <div class="spinner">
+      <div class="percentage">100%</div>
+    </div>
+    <div class="message">HTML</div>
+
+    <div class="spinner">
+      <div class="percentage">100%</div>
+    </div>
+    <div class="message">BOOTSTRAP</div>
+
+    <div class="spinner">
+      <div class="percentage">90%</div>
+    </div>
+    <div class="message">ASP.NET CORE</div>
+
+    <div class="spinner">
+      <div class="percentage">90%</div>
+    </div>
+    <div class="message">TYPESCRIPT</div>
   </div>
+
+  <div class="line">
+    <hr>
+    <img src="https://cdn.freebiesupply.com/logos/large/2x/angular-icon-1-logo-png-transparent.png" alt="Image">
+    <img src="https://www.kindpng.com/picc/m/181-1817010_github-github-icon-hd-png-download.png" alt="Image">
+    <img src="https://www.clipartkey.com/mpngs/m/210-2104705_html-logo-png-transparent-background.png" alt="Image">
+    <img src="https://cdn.freebiesupply.com/logos/large/2x/bootstrap-4-logo-png-transparent.png" alt="Image">
+    <img src="https://i0.wp.com/www.bsidesoft.com/wp-content/uploads/2017/05/aspnetcore.jpg?fit=600%2C436&ssl=1" alt="Image">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Typescript_logo_2020.svg/1200px-Typescript_logo_2020.svg.png" alt="Image">
+  </div>
+</body>
+</html>
+
+
+
+
+
+
 
 
 

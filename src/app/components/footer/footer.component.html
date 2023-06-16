@@ -1,1 +1,106 @@
-<p>footer works!</p>
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .content {
+      flex: 1;
+      padding: 20px;
+    }
+
+    .footer {
+      background-color: #333;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .footer-section {
+      margin: 10px;
+      text-align: left;
+    }
+
+    .footer-section h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .footer-section ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .footer-section ul li {
+      margin-bottom: 5px;
+    }
+
+    .footer-social {
+      margin-top: 20px;
+    }
+
+    .footer-social a {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      background-color: #fff;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 40px;
+      margin: 0 5px;
+      color: #333;
+      transition: background-color 0.3s ease;
+    }
+
+    .footer-social a:hover {
+      background-color: #555;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="content">
+    <!-- Your page content goes here -->
+  </div>
+
+  <div class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>About</h3>
+        <p>Jorge Estenger. This is my personal Briefcase.</p>
+      </div>
+      <div class="footer-section">
+        <h3>Links</h3>
+        <ul>
+          <li><a href="start">Home</a></li>
+          <li><a href="skills">Services</a></li>
+          <li><a href="contactme">Contact</a></li>
+          <li><a href="briefcase">Projects</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Social</h3>
+        <div class="footer-social">
+          <a href="https://www.linkedin.com/in/jorge-estenger-a2405b267/"><i class="fab fa-linkedin-in"></i></a>
+          <a href="https://github.com/JorgeEstenger"><i class="fab fa-github"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
