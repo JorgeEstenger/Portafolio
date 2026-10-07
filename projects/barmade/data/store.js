@@ -46,8 +46,8 @@ function createSeed() {
   };
 }
 
-// Generating the 60-day dataset takes ~1 s, so the result is cached and copied on reset.
-let demoCache = null;
+// The dataset is regenerated on every reset (~1 s) instead of cached: keeping a
+// second copy in memory would not fit comfortably in a 512 MB free-tier instance.
 let demoMeta = null;
 
 /**
@@ -61,8 +61,9 @@ function resetStore(dataset = config.demo.dataset) {
     demoMeta = null;
     return null;
   }
-  if (!demoCache) demoCache = generateDemoData();
-  const { meta, ...collections } = structuredClone(demoCache);
+  // Drop the old dataset first so both never have to fit in memory at once.
+  Object.assign(store, { inventory: [], menu: [], orders: [], alerts: [], movements: [] });
+  const { meta, ...collections } = generateDemoData();
   Object.assign(store, collections);
   demoMeta = meta;
   // Time continues from the end of the generated history (Day 60, 6:30 PM).

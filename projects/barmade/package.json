@@ -4,7 +4,7 @@
   "description": "BarMade - inventory management prototype for an Italian restaurant (in-memory mock data)",
   "main": "firebase-functions.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node --max-old-space-size=256 server.js",
     "dev": "node --watch server.js",
     "test": "node --test"
   },
