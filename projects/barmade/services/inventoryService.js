@@ -118,4 +118,9 @@ async function restock(body) {
   };
 }
 
-module.exports = { getAllInventory, getIngredientById, restock, toIngredientView };
+const { persistent } = require('../data/persistence');
+module.exports = {
+  getAllInventory: persistent(getAllInventory),
+  getIngredientById: persistent(getIngredientById),
+  restock: persistent(restock), toIngredientView,
+};

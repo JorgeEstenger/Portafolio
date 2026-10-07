@@ -153,4 +153,5 @@ async function processOrder(items) {
   return { order, alertsCreated: alerts.created };
 }
 
-module.exports = { getAllOrders, createOrder };
+const { persistent } = require('../data/persistence');
+module.exports = { getAllOrders: persistent(getAllOrders), createOrder: persistent(createOrder) };

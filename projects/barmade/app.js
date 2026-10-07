@@ -20,6 +20,7 @@ app.get('/', (req, res) => {
   res.json({
     name: 'BarMade API',
     status: 'ok',
+    storage: process.env.FIRESTORE_PROJECT_ID ? 'firestore' : 'memory',
     endpoints: ['/api/inventory', '/api/menu', '/api/orders', '/api/alerts'],
   });
 });

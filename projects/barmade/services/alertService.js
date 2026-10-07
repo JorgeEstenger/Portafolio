@@ -168,4 +168,9 @@ async function checkExpirations() {
   };
 }
 
-module.exports = { ALERT_TYPES, getAlerts, checkLowStock, checkExpirations };
+const { persistent } = require('../data/persistence');
+module.exports = {
+  ALERT_TYPES, getAlerts: persistent(getAlerts),
+  checkLowStock: persistent(checkLowStock),
+  checkExpirations: persistent(checkExpirations),
+};

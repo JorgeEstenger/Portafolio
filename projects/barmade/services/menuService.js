@@ -33,4 +33,5 @@ async function getMenuItemById(id) {
   return detailed;
 }
 
-module.exports = { getMenu, getMenuItemById };
+const { persistent } = require('../data/persistence');
+module.exports = { getMenu: persistent(getMenu), getMenuItemById: persistent(getMenuItemById) };

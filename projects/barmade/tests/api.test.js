@@ -9,6 +9,10 @@
 const { test, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 
+// Render exposes production variables during builds; tests must never use live data.
+delete process.env.FIRESTORE_PROJECT_ID;
+delete process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+
 const clock = require('../utils/clock');
 const { resetStore } = require('../data/store');
 const app = require('../app');

@@ -1,5 +1,10 @@
 # BarMade Backend (Prototype)
 
+## Persistent storage
+
+Firestore persistence is available: set `FIRESTORE_PROJECT_ID` and the private `FIREBASE_SERVICE_ACCOUNT_JSON` in Render. See [PERSISTENCE.md](PERSISTENCE.md). Mocks are seeded only once when the database is initialized. Orders, inventory, and alerts then survive process restarts. Without these environment variables, the in-memory behavior described below still applies.
+
+
 Inventory management API for an Italian restaurant, built with **Node.js + Express**.
 Everything runs on **in-memory mock data** — no database yet — but the code is layered
 so a database can be dropped in later without touching the business logic.
