@@ -13,9 +13,11 @@ When `FIRESTORE_PROJECT_ID` is absent the API continues to use in-memory mock da
 
 ## Behavior
 
-Records live under `barmade/state/{inventory,menu,orders,alerts}`. Mock data is seeded only on the first successful transaction; subsequent restarts load saved records. Inventory changes, orders, and alert updates commit atomically. Failed operations commit nothing. Read-only requests do not rewrite unchanged records.
+Records live under `barmade/state/{inventory,menu,orders,alerts,movements}`. Mock data is seeded only on the first successful transaction; subsequent restarts load saved records. Inventory changes, orders, movements and alert updates commit atomically. Failed operations commit nothing. Read-only requests do not rewrite unchanged records.
 
-The implementation reads all four collections per request, appropriate for this small demo. Larger deployments should query individual records and paginate orders/alerts to reduce reads and stay within Firestore quotas.
+**The 60-day demo dataset is in-memory only.** Its ~7,000 orders and ~70,000 movements are far too large for this read-everything-per-request design (and for Firestore's per-transaction write limit), so in Firestore mode the seed is the original small "classic" fixture, and `POST /api/demo/reset` returns `409 DEMO_RESET_UNAVAILABLE`. All other endpoints work in both modes.
+
+The implementation reads all collections per request, appropriate for this small demo. Larger deployments should query individual records and paginate orders/alerts to reduce reads and stay within Firestore quotas.
 
 Existing changes held only in the live Render process are not automatically migrated. Before redeploying, export any current data you need to retain; the first database seed otherwise uses the original mocks.
 

@@ -1,23 +1,30 @@
 /**
- * Order use cases.
+ * Order use cases - the order pipeline:
  *
- * Creating an order:
- *   1. Validate the request body.
- *   2. Look up every menu item (404 if one doesn't exist).
- *   3. Multiply each recipe ingredient by the ordered quantity and add up
- *      the totals per ingredient (two pizzas on separate lines share dough).
- *   4. Build a FEFO plan for every ingredient. If ANY ingredient is short,
- *      reject with 409 and change nothing.
- *   5. Apply all batch changes at once, save the order, run low-stock checks.
+ *   1. Normalize   legacy { menuItemId, quantity } or canonical { channel, item_id, qty, modifiers }
+ *                  into one internal shape (400 / 404 on bad input).
+ *   2. Recipes     recipe x quantity (+ modifiers), summed per ingredient
+ *                  (two pizzas on separate lines share the dough requirement).
+ *   3. Check stock FEFO plan for every ingredient. If ANY ingredient is short,
+ *                  reject with 409 and change nothing.
+ *   4. Deduct      apply all batch changes at once.
+ *   5. Save        the order with gross total, channel fee and net total.
+ *   6. Movements   one `sale` movement per ingredient (audit trail).
+ *   7. Alerts      LOW_STOCK + PREDICTED_RUNOUT checks for the ingredients used.
+ *
+ * The dashboard needs no update step: it is calculated from orders and movements.
+ * Steps 1, 2, 3, 5 and 6 are pure functions in orderRules.js, shared with the
+ * 60-day generator and the rush simulator.
  */
 
 const menuRepository = require('../repositories/menuRepository');
 const inventoryRepository = require('../repositories/inventoryRepository');
 const orderRepository = require('../repositories/orderRepository');
+const movementRepository = require('../repositories/movementRepository');
 const alertService = require('./alertService');
-const rules = require('./stockRules');
+const orderRules = require('./orderRules');
 const clock = require('../utils/clock');
-const { toLocalISO } = require('../utils/dates');
+const { isBusinessDate } = require('../utils/timezone');
 const AppError = require('../utils/AppError');
 
 /**
@@ -32,87 +39,62 @@ function runExclusive(task) {
   return result;
 }
 
-const roundMoney = (n) => Math.round(n * 100) / 100;
-
 async function getAllOrders() {
   return orderRepository.findAll();
 }
 
-function validateOrderBody(body) {
-  const items = body && body.items;
-  if (!Array.isArray(items) || items.length === 0) {
-    throw new AppError(400, 'VALIDATION_ERROR', 'items must be a non-empty array.');
+/** GET /api/orders with optional ?date= ?from= ?to= ?channel= ?limit= ?offset= */
+async function findOrders(query = {}) {
+  const { date, from, to, channel } = query;
+  for (const [name, value] of Object.entries({ date, from, to })) {
+    if (value !== undefined && !isBusinessDate(value)) {
+      throw new AppError(400, 'INVALID_DATE', `${name} must be a date like 2026-10-07.`);
+    }
   }
-  items.forEach((item, index) => {
-    if (!item || typeof item.menuItemId !== 'string' || item.menuItemId.trim() === '') {
-      throw new AppError(400, 'VALIDATION_ERROR', `items[${index}].menuItemId is required.`);
-    }
-    if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
-      throw new AppError(400, 'INVALID_QUANTITY', `items[${index}].quantity must be a whole number greater than 0.`);
-    }
-  });
-  return items;
+  if (channel !== undefined && !orderRules.CHANNELS.includes(channel)) {
+    throw new AppError(400, 'INVALID_CHANNEL', `channel must be one of: ${orderRules.CHANNELS.join(', ')}`);
+  }
+  const limit = parsePaging(query.limit, 100, 'limit', 1, 1000);
+  const offset = parsePaging(query.offset, 0, 'offset', 0, Infinity);
+  const result = await orderRepository.find({ date, from, to, channel }, { limit, offset });
+  return { ...result, limit, offset };
+}
+
+function parsePaging(value, fallback, name, min, max) {
+  if (value === undefined) return fallback;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < min || n > max) {
+    throw new AppError(400, 'VALIDATION_ERROR', `${name} must be a whole number between ${min} and ${max}.`);
+  }
+  return n;
+}
+
+async function getOrderById(id) {
+  const order = await orderRepository.findById(id);
+  if (!order) throw new AppError(404, 'ORDER_NOT_FOUND', `Order ${id} was not found.`);
+  return order;
 }
 
 async function createOrder(body) {
-  const items = validateOrderBody(body);
-  return runExclusive(() => processOrder(items));
+  // Validate the shape before queueing (400s don't need to wait for other orders).
+  if (!body || !Array.isArray(body.items) || body.items.length === 0) {
+    throw new AppError(400, 'VALIDATION_ERROR', 'items must be a non-empty array.');
+  }
+  return runExclusive(() => processOrder(body));
 }
 
-async function processOrder(items) {
+async function processOrder(body) {
   const now = clock.now();
 
-  // Step 2: resolve menu items.
-  const lines = [];
-  for (const item of items) {
-    const menuItem = await menuRepository.findById(item.menuItemId);
-    if (!menuItem) {
-      throw new AppError(404, 'MENU_ITEM_NOT_FOUND', `Menu item ${item.menuItemId} was not found.`);
-    }
-    lines.push({ menuItem, quantity: item.quantity });
-  }
+  // Step 1: normalize (needs the menu to resolve item ids/keys and modifiers).
+  const { channel, lines } = orderRules.normalizeOrder(body, await menuRepository.findAll());
 
-  // Step 3: total required amount per ingredient.
-  const required = new Map();
-  for (const { menuItem, quantity } of lines) {
-    for (const recipeLine of menuItem.ingredients) {
-      const current = required.get(recipeLine.ingredientId) || 0;
-      required.set(recipeLine.ingredientId, current + recipeLine.quantity * quantity);
-    }
-  }
+  // Step 2: total required amount per ingredient.
+  const required = orderRules.computeRequirements(lines);
 
-  // Step 4: plan FEFO consumption and check stock BEFORE changing anything.
+  // Step 3: plan FEFO consumption and check stock BEFORE changing anything.
   const ingredients = await inventoryRepository.findByIds([...required.keys()]);
-  const plans = [];
-  const shortages = [];
-
-  for (const [ingredientId, amount] of required) {
-    const ingredient = ingredients.find((i) => i.id === ingredientId);
-    if (!ingredient) {
-      // A recipe points at an ingredient that doesn't exist: a data problem, not a client error.
-      throw new AppError(500, 'RECIPE_DATA_ERROR', `Recipe references unknown ingredient ${ingredientId}.`);
-    }
-
-    const plan = rules.planFefoConsumption(ingredient.batches, amount, now);
-    if (!plan.fulfilled) {
-      const expiredQuantity = rules.getExpiredQuantity(ingredient.batches, now);
-      shortages.push({
-        ingredientId,
-        ingredientName: ingredient.name,
-        unit: ingredient.unit,
-        required: amount,
-        available: plan.available,
-        missing: amount - plan.available,
-        expiredQuantity,
-        reason:
-          plan.available + expiredQuantity >= amount
-            ? 'EXPIRED_STOCK_NOT_USABLE'
-            : 'INSUFFICIENT_STOCK',
-      });
-    }
-    plans.push({ ingredient, amount, plan });
-  }
-
+  const { plans, shortages } = orderRules.planRequirements(required, ingredients, now);
   if (shortages.length > 0) {
     const names = shortages.map((s) => s.ingredientName).join(', ');
     throw new AppError(409, 'INSUFFICIENT_INVENTORY', `Not enough inventory to fulfill this order: ${names}.`, {
@@ -120,38 +102,30 @@ async function processOrder(items) {
     });
   }
 
-  // Step 5: apply every batch change together.
+  // Step 4: apply every batch change together.
   await inventoryRepository.setBatchQuantities(
     plans.flatMap(({ ingredient, plan }) =>
       plan.allocations.map((a) => ({ ingredientId: ingredient.id, batchId: a.batchId, quantity: a.remaining }))
     )
   );
 
-  const orderItems = lines.map(({ menuItem, quantity }) => ({
-    menuItemId: menuItem.id,
-    name: menuItem.name,
-    quantity,
-    unitPrice: menuItem.price,
-    lineTotal: roundMoney(menuItem.price * quantity),
-  }));
+  // Step 5: save the order (prices, channel fee, net).
+  const order = await orderRepository.create(orderRules.buildOrderRecord({ channel, lines, plans, now }));
 
-  const order = await orderRepository.create({
-    status: 'COMPLETED',
-    createdAt: toLocalISO(now),
-    items: orderItems,
-    total: roundMoney(orderItems.reduce((sum, i) => sum + i.lineTotal, 0)),
-    consumed: plans.map(({ ingredient, amount, plan }) => ({
-      ingredientId: ingredient.id,
-      ingredientName: ingredient.name,
-      unit: ingredient.unit,
-      quantity: amount,
-      batches: plan.allocations.map((a) => ({ batchId: a.batchId, quantity: a.take })),
-    })),
-  });
+  // Step 6: audit trail - one sale movement per ingredient, with the balance after the sale.
+  const updated = new Map((await inventoryRepository.findByIds([...required.keys()])).map((i) => [i.id, i]));
+  const movements = await movementRepository.createMany(plans.map(({ ingredient, amount }) =>
+    orderRules.buildMovement({ ingredient: updated.get(ingredient.id), change: -amount, reason: 'sale', now, orderId: order.id })));
 
-  const alerts = await alertService.checkLowStock([...required.keys()]);
-  return { order, alertsCreated: alerts.created };
+  // Step 7: alerts.
+  const alerts = await alertService.checkStockAlerts([...required.keys()], { now });
+  return { order, movements, alertsCreated: alerts.created, alertsResolved: alerts.resolved };
 }
 
 const { persistent } = require('../data/persistence');
-module.exports = { getAllOrders: persistent(getAllOrders), createOrder: persistent(createOrder) };
+module.exports = {
+  getAllOrders: persistent(getAllOrders),
+  findOrders: persistent(findOrders),
+  getOrderById: persistent(getOrderById),
+  createOrder: persistent(createOrder),
+};

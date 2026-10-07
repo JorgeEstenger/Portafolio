@@ -1,7 +1,7 @@
 const { AsyncLocalStorage } = require('node:async_hooks');
 
 const context = new AsyncLocalStorage();
-const collections = ['inventory', 'menu', 'orders', 'alerts'];
+const collections = ['inventory', 'menu', 'orders', 'alerts', 'movements'];
 let database;
 
 function getDatabase() {

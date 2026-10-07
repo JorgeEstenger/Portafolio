@@ -1,7 +1,8 @@
 /**
  * End-to-end API tests. Starts the app on a random port and calls it with fetch.
  * The clock is frozen and the in-memory data is reset before every test,
- * so each test sees the exact same starting inventory.
+ * so each test sees the exact same starting inventory (the original 'classic'
+ * fixture; the 60-day demo dataset is covered by tests/demo.test.js).
  *
  * Run with: npm test
  */
@@ -34,7 +35,7 @@ after(() => {
 
 beforeEach(() => {
   clock.setNow(NOW);
-  resetStore();
+  resetStore('classic'); // the original small fixture these tests were written for
 });
 
 /** Small fetch wrapper: returns { status, body }. Pass rawBody to send a literal string. */

@@ -14,8 +14,9 @@ async function findAll() {
   return clone(store.inventory);
 }
 
+/** Find by ID ("ING-002") or, for the demo catalog, by key ("mozzarella"). */
 async function findById(id) {
-  const ingredient = store.inventory.find((i) => i.id === id);
+  const ingredient = store.inventory.find((i) => i.id === id) || store.inventory.find((i) => i.key && i.key === id);
   return ingredient ? clone(ingredient) : null;
 }
 
