@@ -355,3 +355,19 @@ On startup the mock data produces: EXPIRING_SOON for **MZ-001** (mozzarella) and
 
 Since there's no scheduler yet, run the manual endpoint (or add a cron job later) to
 re-check over time.
+
+## Deploy on Render
+
+This backend is included in the portfolio repository at `projects/barmade`.
+The repository-root `render.yaml` defines a free Node.js web service.
+
+1. Open https://dashboard.render.com/select-repo?type=blueprint and select `JorgeEstenger/Portafolio`.
+2. Use branch `main` and Blueprint path `render.yaml`.
+3. Review and deploy the `barmade-api` service.
+
+For a manual Web Service setup, use root directory `projects/barmade`, build command `npm ci && npm test`, start command `npm start`, and health check path `/`. Set `NODE_VERSION=24` and `NODE_ENV=production`. Render supplies `PORT`.
+
+After deployment, open the assigned service URL and `/api/inventory` to verify the API.
+This is a backend API, so the root returns JSON. It does not serve the Angular portfolio.
+Inventory, orders, and alerts are stored in memory and reset whenever the process restarts.
+Free services can sleep when idle, so the first request after inactivity can take longer.
