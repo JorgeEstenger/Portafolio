@@ -1,5 +1,9 @@
 # Portafolio
 
+## Featured projects
+
+- [BarMade](projects/barmade): Node.js + Express restaurant inventory API with batch tracking, first-expiring-first-out stock consumption, low-stock and expiration alerts, and 18 automated tests. Uses in-memory mock data.
+
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.0.2.
 
 ## Development server

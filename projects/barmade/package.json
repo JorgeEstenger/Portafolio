@@ -1,0 +1,19 @@
+{
+  "name": "barmade-backend",
+  "version": "0.1.0",
+  "description": "BarMade - inventory management prototype for an Italian restaurant (in-memory mock data)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
